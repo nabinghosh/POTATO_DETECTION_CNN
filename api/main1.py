@@ -7,6 +7,7 @@ from PIL import Image
 import tensorflow as tf
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+import logging
 
 app = FastAPI()
 
@@ -39,16 +40,27 @@ def read_file_as_image(data) -> np.ndarray:
 
 @app.post("/predict", response_class=HTMLResponse)
 async def predict(request: Request, file: UploadFile = File(...)):
-    image = read_file_as_image(await file.read())
-    img_batch = np.expand_dims(image, 0)
-    prediction = MODEL.predict(img_batch)
-    predicted_class = CLASS_NAMES[np.argmax(prediction[0])]
-    confidence = np.max(prediction[0])
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "predicted_class": predicted_class, 
-        "confidence": confidence
-    })
+    try:
+        logging.info("Received file: %s", file.filename)
+        image = read_file_as_image(await file.read())
+        img_batch = np.expand_dims(image, 0)
+        prediction = MODEL.predict(img_batch)
+        predicted_class = CLASS_NAMES[np.argmax(prediction[0])]
+        confidence = np.max(prediction[0]) * 100
+        logging.info("Prediction: %s, Confidence: %.2f%%", predicted_class, confidence)
+        return templates.TemplateResponse("index.html", {
+            "request": request, 
+            "predicted_class": predicted_class, 
+            "confidence": confidence
+        })
+    except Exception as e:
+        logging.error("Error during prediction: %s", str(e))
+        return templates.TemplateResponse("index.html", {
+            "request": request, 
+            "predicted_class": "Error",
+            "confidence": 0
+        })
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     uvicorn.run(app, host='127.0.0.1', port=8000)
