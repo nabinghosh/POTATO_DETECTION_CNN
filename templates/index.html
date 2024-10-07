@@ -1,11 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Prediction Result</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potato Disease Prediction</title>
 </head>
 <body>
-    <h1>Prediction Result</h1>
-    <p><strong>Class:</strong> { {predicted_class} }</p>
-    <p><strong>Confidence:</strong> { {confidence} }</p>
+    <h1>Potato Disease Prediction</h1>
+    <form action="/predict" method="post" enctype="multipart/form-data">
+        <label for="file">Upload an image:</label>
+        <input type="file" id="file" name="file" accept="image/*" required>
+        <button type="submit">Predict</button>
+    </form>
+    {% if predicted_class %}
+    <h2>Prediction Result</h2>
+    <p>Predicted Class: {{ predicted_class }}</p>
+    <p>Confidence: {{ confidence }}%</p>
+    {% endif %}
 </body>
 </html>
